@@ -1,11 +1,11 @@
 {
-  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "850DFEBD5BDEFDA9284FDB2570462ED2F7B1B79F",
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "3329F3C79ED872CCB83EE76C35F8DA81FBEB69A0",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
 
   },
   "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
     "1A55DB311F1A796F94F8DF78BB0CF1FE05B473A3" : 9223372036854775807,
-    "850DFEBD5BDEFDA9284FDB2570462ED2F7B1B79F" : 9223372036854775807,
+    "3329F3C79ED872CCB83EE76C35F8DA81FBEB69A0" : 9223372036854775807,
     "E90364492BA65DE19ABC3404C5AAB6D875A62FB4" : 9223372036854775807,
     "C35B61AF7B116B31065B047457199CD3D359DC3B" : 9223372036854775807,
     "173EC316AA131D87A4E9C52E5E9C154C51CF2D49" : 9223372036854775807
@@ -13,7 +13,7 @@
   "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "79AE0415-CDB5-484B-911F-5D3F97998829",
   "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
     "1A55DB311F1A796F94F8DF78BB0CF1FE05B473A3" : "esp-homekit-rgbw-strip\/components\/esp-wolfssl\/",
-    "850DFEBD5BDEFDA9284FDB2570462ED2F7B1B79F" : "esp-homekit-rgbw-strip\/",
+    "3329F3C79ED872CCB83EE76C35F8DA81FBEB69A0" : "esp-homekit-rgbw-strip\/",
     "E90364492BA65DE19ABC3404C5AAB6D875A62FB4" : "esp-homekit-rgbw-strip\/components\/esp-cjson\/",
     "C35B61AF7B116B31065B047457199CD3D359DC3B" : "esp-homekit-rgbw-strip\/components\/esp-cjson\/cJSON\/",
     "173EC316AA131D87A4E9C52E5E9C154C51CF2D49" : "esp-homekit-rgbw-strip\/components\/esp-homekit\/"
@@ -35,7 +35,7 @@
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/maccoylton\/esp-homekit-rgbw-strip.git",
       "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
-      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "850DFEBD5BDEFDA9284FDB2570462ED2F7B1B79F"
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "3329F3C79ED872CCB83EE76C35F8DA81FBEB69A0"
     },
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/DaveGamble\/cJSON.git",
