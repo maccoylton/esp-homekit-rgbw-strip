@@ -1,0 +1,212 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		55A5AA2C20D56B10004E45A9 /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; path = src; sourceTree = "<group>"; };
+		55A5AA2E20D56D29004E45A9 /* components */ = {isa = PBXFileReference; lastKnownFileType = folder; path = components; sourceTree = "<group>"; };
+		55A5AA2F20D56F0C004E45A9 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = main.c; path = src/main.c; sourceTree = "<group>"; };
+		55A5AA3020D56F0C004E45A9 /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = main.h; path = src/main.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		55A5AA2120D569F4004E45A9 = {
+			isa = PBXGroup;
+			children = (
+				55A5AA2F20D56F0C004E45A9 /* main.c */,
+				55A5AA3020D56F0C004E45A9 /* main.h */,
+				55A5AA2E20D56D29004E45A9 /* components */,
+				55A5AA2C20D56B10004E45A9 /* src */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		55A5AA2620D569F4004E45A9 /* esp-homekit-rgbw-strip */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 55A5AA2920D569F4004E45A9 /* Build configuration list for PBXLegacyTarget "esp-homekit-rgbw-strip" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "/Volumes/case-sensitive/esp-homekit-rgbw-strip/src";
+			dependencies = (
+			);
+			name = "esp-homekit-rgbw-strip";
+			passBuildSettingsInEnvironment = 1;
+			productName = "esp-homekit-rgbw-strip";
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		55A5AA2220D569F4004E45A9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = maccoylton;
+				TargetAttributes = {
+					55A5AA2620D569F4004E45A9 = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = BPHS6ZKLL9;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 55A5AA2520D569F4004E45A9 /* Build configuration list for PBXProject "esp-homekit-rgbw-strip" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 55A5AA2120D569F4004E45A9;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				55A5AA2620D569F4004E45A9 /* esp-homekit-rgbw-strip */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		55A5AA2720D569F4004E45A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		55A5AA2820D569F4004E45A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+			};
+			name = Release;
+		};
+		55A5AA2A20D569F4004E45A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BIN_PATH = "/volumes/case-sensitive/esp-open-sdk/ESP8266_RTOS_SDK/bin/volumes/case-sensitive/esp-open-sdk/ESP8266_RTOS_SDK/bin\n";
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = BPHS6ZKLL9;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/volumes/case-sensitive/esp-open-sdk/xtensa-lx106-elf/bin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDK_PATH = "/volumes/case-sensitive/esp-open-sdk/esp-open-rtos";
+			};
+			name = Debug;
+		};
+		55A5AA2B20D569F4004E45A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BIN_PATH = "/volumes/case-sensitive/esp-open-sdk/ESP8266_RTOS_SDK/bin/volumes/case-sensitive/esp-open-sdk/ESP8266_RTOS_SDK/bin\n";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BPHS6ZKLL9;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PATH = "/volumes/case-sensitive/esp-open-sdk/xtensa-lx106-elf/bin:/usr/local/opt/gnu-sed/libexec/gnubin:$PATH";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDK_PATH = "/volumes/case-sensitive/esp-open-sdk/esp-open-rtos";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		55A5AA2520D569F4004E45A9 /* Build configuration list for PBXProject "esp-homekit-rgbw-strip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55A5AA2720D569F4004E45A9 /* Debug */,
+				55A5AA2820D569F4004E45A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55A5AA2920D569F4004E45A9 /* Build configuration list for PBXLegacyTarget "esp-homekit-rgbw-strip" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55A5AA2A20D569F4004E45A9 /* Debug */,
+				55A5AA2B20D569F4004E45A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 55A5AA2220D569F4004E45A9 /* Project object */;
+}
