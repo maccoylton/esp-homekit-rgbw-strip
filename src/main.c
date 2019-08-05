@@ -32,16 +32,25 @@
 
 #include <multipwm/multipwm.h>
 #include "main.h"
+#include <ir/ir.h>
+#include <ir/raw.h>
+
+
+/*#include <ringbuf.h>
+#include <ir_tx_rx.h>
+#include <hw_timer.h>
+*/
 
 #define LPF_SHIFT 4  // divide by 16
 #define LPF_INTERVAL 10  // in milliseconds
+#define IR_RX_GPIO 4
 
 
 #define WHITE_PWM_PIN 13
 #define BLUE_PWM_PIN 12
-#define RED_PWM_PIN 5
-#define GREEN_PWM_PIN 14
-#define LED_RGB_SCALE 32768       // this is the scaling factor used for color conversion
+#define RED_PWM_PIN 14
+#define GREEN_PWM_PIN 5
+#define LED_RGB_SCALE 65535       // this is the scaling factor used for color conversion
 
 // add this section to make your device OTA capable
 // create the extra characteristic &ota_trigger, at the end of the primary service (before the NULL)
@@ -89,6 +98,29 @@ pwm_info_t pwm_info;
 
 double __ieee754_remainder(double x, double y) {
     return x - y * floor(x/y);
+}
+
+void ir_dump_task(void *arg) {
+    ir_rx_init(IR_RX_GPIO, 1024);
+    ir_decoder_t *raw_decoder = ir_raw_make_decoder();
+    
+    uint16_t buffer_size = sizeof(int16_t) * 1024;
+    int16_t *buffer = malloc(buffer_size);
+    while (1) {
+        int size = ir_recv(raw_decoder, 0, buffer, buffer_size);
+        if (size <= 0)
+            continue;
+        
+        printf("Decoded packet (size = %d):\n", size);
+        for (int i=0; i < size; i++) {
+            printf("%5d ", buffer[i]);
+            if (i % 16 == 15)
+                printf("\n");
+        }
+        
+        if (size % 16)
+            printf("\n");
+    }
 }
 
 
@@ -182,20 +214,28 @@ void hsi2rgbw_hack(float h, float s, float i, rgb_color_t* rgbw) {
     rgbw->white=w;
 }
 
-void led_strip_send (rgb_color_t *color){
+void led_strip_send_task (void *_args){
+ 
+    const TickType_t xPeriod = pdMS_TO_TICKS(LPF_INTERVAL);
+    TickType_t xLastWakeTime = xTaskGetTickCount();
     
-    multipwm_stop(&pwm_info);
-    multipwm_set_duty(&pwm_info, 0, color->white);
-    multipwm_set_duty(&pwm_info, 1, color->blue);
-    multipwm_set_duty(&pwm_info, 2, color->green);
-    multipwm_set_duty(&pwm_info, 3, color->red);
-    printf ("sending r=%d,g=%d, b=%d, w=%d,\n", color->red,color->green, color->blue, color->white );
-    multipwm_start(&pwm_info);
-    
+    while(1){
+        if ((target_color.red != current_color.red) || (target_color.green != current_color.green) ||(target_color.blue != current_color.blue) ||(target_color.white != current_color.white)){
+            multipwm_stop(&pwm_info);
+            multipwm_set_duty(&pwm_info, 0, target_color.white);
+            multipwm_set_duty(&pwm_info, 1, target_color.blue);
+            multipwm_set_duty(&pwm_info, 2, target_color.green);
+            multipwm_set_duty(&pwm_info, 3, target_color.red);
+            printf ("sending r=%d,g=%d, b=%d, w=%d,\n", target_color.red, target_color.green, target_color.blue, target_color.white );
+            multipwm_start(&pwm_info);
+            current_color=target_color;
+        }
+         vTaskDelayUntil(&xLastWakeTime, xPeriod);
+    }
 }
 
 void led_strip_set() {
-
+    
     if (led_on) {
         // convert HSI to RGBW
         hsi2rgbw_hack(led_hue, led_saturation, led_brightness, &target_color);
@@ -206,15 +246,13 @@ void led_strip_set() {
         target_color.green = 0;
         target_color.blue = 0;
         target_color.white = 0;
-    }
-    
+        }
+ 
  //   current_color.red += ((target_color.red * 256) - current_color.red) >> LPF_SHIFT ;
  //   current_color.green += ((target_color.green * 256) - current_color.green) >> LPF_SHIFT ;
  //   current_color.blue += ((target_color.blue * 256) - current_color.blue) >> LPF_SHIFT ;
 
     
-    
-    led_strip_send(&target_color);
 }
 
 void led_identify_task(void *_args) {
@@ -226,9 +264,9 @@ void led_identify_task(void *_args) {
     
     for (int i=0; i<3; i++) {
         for (int j=0; j<2; j++) {
-            led_strip_send (&black_color);
+            target_color = black_color;
             vTaskDelay(100 / portTICK_PERIOD_MS);
-            led_strip_send (&white_color);
+            target_color = white_color;
             vTaskDelay(100 / portTICK_PERIOD_MS);
 
         }
@@ -237,7 +275,7 @@ void led_identify_task(void *_args) {
     }
     
 
-    led_strip_send (&target_color);
+    target_color = current_color;
     vTaskDelete(NULL);
 }
 
@@ -388,4 +426,9 @@ void user_init(void) {
     config.accessories[0]->config_number=c_hash;
     
     homekit_server_init(&config);
+    
+    xTaskCreate(led_strip_send_task, "led_strip_send_task", 256, NULL, 2, NULL);
+
+    xTaskCreate(ir_dump_task, "read_ir_task", 256, NULL, 2, NULL);
+
 }
