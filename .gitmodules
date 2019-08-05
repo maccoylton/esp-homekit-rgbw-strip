@@ -7,3 +7,6 @@
 [submodule "components/esp-cjson"]
 	path = components/esp-cjson
 	url = https://github.com/maximkulkin/esp-cjson
+[submodule "components/esp-ir"]
+	path = components/esp-ir
+	url = https://github.com/maximkulkin/esp-ir
