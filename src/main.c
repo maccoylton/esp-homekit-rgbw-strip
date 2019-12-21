@@ -39,27 +39,25 @@
 #include "main.h"
 #include <ir/ir.h>
 #include <ir/raw.h>
+#include <ir/generic.h>
 #include <custom_characteristics.h>
 #include <udplogger.h>
 #include <shared_functions.h>
+#include <colour_conversion.h>
 
 
-/*#include <ringbuf.h>
-#include <ir_tx_rx.h>
-#include <hw_timer.h>
-*/
 
-#define LPF_SHIFT 4  // divide by 16
+#define LPF_SHIFT 8 // divide by 256
 #define LPF_INTERVAL 10  // in milliseconds
 #define IR_RX_GPIO 4
 
-
+#define DUMMY_PWM_PIN 14
 #define WHITE_PWM_PIN 15
 #define BLUE_PWM_PIN 13
 #define RED_PWM_PIN 12
 #define GREEN_PWM_PIN 5
-#define LED_RGB_SCALE 255       // this is the scaling factor used for color conversion
-#define LED_STRIP_SET_DELAY 500
+#define PWM_SCALE 255
+#define LED_STRIP_SET_DELAY 100
 
 
 // add this section to make your device OTA capable
@@ -74,10 +72,31 @@
 #define DEVICE_SERIAL "12345678"
 #define FW_VERSION "1.0"
 
+hsi_color_t hsi_colours[77];
+
+rgb_color_t current_color = { { 0, 0, 0, 0 } };
+rgb_color_t target_color = { { 0, 0, 0, 0 } };
+
+
 void on_update(homekit_characteristic_t *ch, homekit_value_t value, void *context);
 static pwm_info_t pwm_info;
 ETSTimer led_strip_timer;
 
+homekit_value_t led_on_get();
+
+void led_on_set(homekit_value_t value);
+
+homekit_value_t led_brightness_get();
+
+void led_brightness_set(homekit_value_t value);
+
+homekit_value_t led_hue_get();
+
+void led_hue_set(homekit_value_t value);
+
+homekit_value_t led_saturation_get();
+
+void led_saturation_set(homekit_value_t value);
 
 homekit_characteristic_t wifi_reset   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_RESET, false, .setter=wifi_reset_set);
 homekit_characteristic_t wifi_check_interval   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_CHECK_INTERVAL, 10, .setter=wifi_check_interval_set);
@@ -88,29 +107,31 @@ homekit_characteristic_t manufacturer = HOMEKIT_CHARACTERISTIC_(MANUFACTURER,  D
 homekit_characteristic_t serial       = HOMEKIT_CHARACTERISTIC_(SERIAL_NUMBER, DEVICE_SERIAL);
 homekit_characteristic_t model        = HOMEKIT_CHARACTERISTIC_(MODEL,         DEVICE_MODEL);
 homekit_characteristic_t revision     = HOMEKIT_CHARACTERISTIC_(FIRMWARE_REVISION,  FW_VERSION);
+
+homekit_characteristic_t on = HOMEKIT_CHARACTERISTIC_(ON, true,
+                       .getter = led_on_get,
+                       .setter = led_on_set);
+
+homekit_characteristic_t brightness = HOMEKIT_CHARACTERISTIC_(BRIGHTNESS, 100,
+                       .getter = led_brightness_get,
+                       .setter = led_brightness_set);
+
+homekit_characteristic_t hue = HOMEKIT_CHARACTERISTIC_(HUE, 0,
+                       .getter = led_hue_get,
+                       .setter = led_hue_set);
+
+homekit_characteristic_t saturation = HOMEKIT_CHARACTERISTIC_(SATURATION, 0,
+                       .getter = led_saturation_get,
+                       .setter = led_saturation_set);
+
 homekit_characteristic_t red_gpio     = HOMEKIT_CHARACTERISTIC_( CUSTOM_RED_GPIO, 12, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 homekit_characteristic_t green_gpio   = HOMEKIT_CHARACTERISTIC_( CUSTOM_GREEN_GPIO, 5, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 homekit_characteristic_t blue_gpio    = HOMEKIT_CHARACTERISTIC_( CUSTOM_BLUE_GPIO, 13, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 homekit_characteristic_t white_gpio   = HOMEKIT_CHARACTERISTIC_( CUSTOM_WHITE_GPIO, 15, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 homekit_characteristic_t led_boost    = HOMEKIT_CHARACTERISTIC_( CUSTOM_LED_BOOST, 0, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 
-const int status_led_gpio = 13; /*set the gloabl variable for the led to be sued for showing status */
+const int status_led_gpio = 2; /*set the gloabl variable for the led to be sued for showing status */
 int led_off_value=1; /* global varibale to support LEDs set to 0 where the LED is connected to GND, 1 where +3.3v */
-
-
-typedef union {
-    struct {
-        uint16_t white;
-        uint16_t blue;
-        uint16_t green;
-        uint16_t red;
-    };
-    uint64_t color;
-} rgb_color_t;
-
-// Color smoothing variables
-rgb_color_t current_color = { { 0, 0, 0, 0 } };
-rgb_color_t target_color = { { 0, 0, 0, 0 } };
 
 // Global variables
 float led_hue = 0;              // hue is scaled 0 to 360
@@ -146,170 +167,200 @@ double __ieee754_remainder(double x, double y) {
 }
 
 void ir_dump_task(void *arg) {
-    ir_rx_init(IR_RX_GPIO, 1024);
-    ir_decoder_t *raw_decoder = ir_raw_make_decoder();
     
-    uint16_t buffer_size = sizeof(int16_t) * 1024;
-    int16_t *buffer = malloc(buffer_size);
+    ir_rx_init(IR_RX_GPIO, 1024);
+    
+    ir_decoder_t *nec_decoder = ir_generic_make_decoder(&nec_protocol_config);
+    
+    int16_t buffer_size = sizeof(uint8_t) * 1024;
+    int8_t *buffer = malloc(buffer_size);
+    int size=0;
+    
     while (1) {
-        int size = ir_recv(raw_decoder, 0, buffer, buffer_size);
+        size = ir_recv(nec_decoder, 0, buffer, buffer_size);
         if (size <= 0)
             continue;
         
         printf("Decoded packet (size = %d):\n", size);
         for (int i=0; i < size; i++) {
             printf("%5d ", buffer[i]);
-            if (i % 16 == 15)
-                printf("\n");
+        }
+        printf("\n");
+        
+        printf ("\nbuffer[2]=%d, mh_on[2]=%d, mh_off[2]=%d, buffer[3]=%d, mh_on[3]=%d, mh_off[3]=%d\n", buffer[2], mh_on[2], mh_off[2], buffer[3], mh_on[3], mh_off[3]);
+        
+        int cmd = buffer[2];
+        
+        switch (cmd)
+        {
+            case on_button:
+                printf ("%s: LED command On\n",__func__);
+                led_on=true;
+                on.value = HOMEKIT_BOOL (true);
+                break;
+            case off:
+                printf ("%s: LED command Off\n",__func__);
+                led_on=false;
+                on.value = HOMEKIT_BOOL (false);
+                break;
+            case up:
+                printf ("%s: LED command Up\n",__func__);
+                if (brightness.value.int_value <= 90){
+                    brightness.value.int_value +=10;
+                }
+                break;
+            case down:
+                printf ("%s: LED command Down\n",__func__);
+                if (brightness.value.int_value >=10){
+                    brightness.value.int_value -=10;
+                }
+                break;
+            case strobe:
+                printf ("%s: LED command Strobe\n",__func__);
+                break;
+            case smooth:
+                printf ("%s: LED command Smooth\n",__func__);
+                break;
+            case fade:
+                printf ("%s: LED command Fade\n",__func__);
+                break;
+            case flash:
+                printf ("%s: LED command Flash\n",__func__);
+                break;
+            case aubergene:
+            case cream:
+            case purple:
+            case pink:
+            case blue:
+            case light_green:
+            case green5:
+            case white:
+            case light_blue:
+            case dark_orange:
+            case red:
+            case green:
+            case yellow:
+            case green4:
+            case orange:
+            case sky_blue:
+                printf ("%s: LED command %d\n",__func__, cmd);
+                hue.value = HOMEKIT_FLOAT (hsi_colours[cmd].hue);
+                saturation.value = HOMEKIT_FLOAT (hsi_colours[cmd].saturation);
+                brightness.value = HOMEKIT_INT (hsi_colours[cmd].brightness);
+                break;
+            default:
+                printf ("%s: LED command unknown %d\n",__func__, buffer[cmd]);
+                break;
         }
         
-        if (size % 16)
-            printf("\n");
-    }
-}
-
-    
-
-#define DEG_TO_RAD(X) (M_PI*(X)/180)
-//http://blog.saikoled.com/post/44677718712/how-to-convert-from-hsi-to-rgb-white
-void hsi2rgbw(float h, float s, float i, rgb_color_t* rgbw) {
-    const float led_color_boost = (led_boost.value.int_value * 0.02) + 1;
-    int r, g, b, w;
-    
-    while (h < 0) { h += 360.0F; };     // cycle h around to 0-360 degrees
-    while (h >= 360) { h -= 360.0F; };
-    h = 3.14159F*h / 180.0F;            // convert to radians.
-    s /= 100.0F;                        // from percentage to ratio
-    i /= 100.0F;                        // from percentage to ratio
-    s = s > 0 ? (s < 1 ? s : 1) : 0;    // clamp s and i to interval [0,1]
-    i = i > 0 ? (i < 1 ? i : 1) : 0;    // clamp s and i to interval [0,1]
-    //i = i * sqrt(i);                    // shape intensity to have finer granularity near 0
-    
-    if (h < 2.09439) {
-        r = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * cos(h) / cos(1.047196667 - h));
-        g = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * (1 - cos(h) / cos(1.047196667 - h)));
-        b = LED_RGB_SCALE * i * led_color_boost / 3 * (1 - s);
-        w = LED_RGB_SCALE * i * (1 -s);
-    }
-    else if (h < 4.188787) {
-        h = h - 2.09439;
-        g = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * cos(h) / cos(1.047196667 - h));
-        b = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * (1 - cos(h) / cos(1.047196667 - h)));
-        r = LED_RGB_SCALE * i * led_color_boost / 3 * (1 - s);
-        w = LED_RGB_SCALE * i * (1 -s);
-    }
-    else {
-        h = h - 4.188787;
-        b = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * cos(h) / cos(1.047196667 - h));
-        r = LED_RGB_SCALE * i * led_color_boost / 3 * (1 + s * (1 - cos(h) / cos(1.047196667 - h)));
-        g = LED_RGB_SCALE * i * led_color_boost / 3 * (1 - s);
-        w = LED_RGB_SCALE * i * (1 -s);
-    }
-    
-    rgbw->red = (uint8_t) r;
-    rgbw->green = (uint8_t) g;
-    rgbw->blue = (uint8_t) b;
-    rgbw->white= (uint8_t) w;
-}
-
-
-/*
- IRAM void led_strip_send_task (void *_args){
-    
-    const TickType_t xPeriod = pdMS_TO_TICKS(LPF_INTERVAL);
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    
-    uint8_t pins[] = {WHITE_PWM_PIN, BLUE_PWM_PIN,GREEN_PWM_PIN, RED_PWM_PIN};
-    pwm_info_t pwm_info;
-    
-    pwm_info.channels = 4;
-    
-    multipwm_init(&pwm_info);
-    multipwm_set_freq(&pwm_info, 65535);
-    for (uint8_t i=0; i<pwm_info.channels; i++) {
-        multipwm_set_pin(&pwm_info, i, pins[i]);
-        printf ("Set pin %d \n",i);
-    }
-    
-    while(1){
-        if (led_on) {
-            // convert HSI to RGBW
-            hsi2rgbw(led_hue, led_saturation, led_brightness, &target_color);
-            // printf("h=%d,s=%d,b=%d => r=%d,g=%d, b=%d, w=%d,\n",(int)led_hue,(int)led_saturation,(int)led_brightness, target_color.red,target_color.green, target_color.blue, target_color.white );
+        homekit_characteristic_notify(&hue,hue.value );
+        homekit_characteristic_notify(&saturation,saturation.value );
+        homekit_characteristic_notify(&brightness,brightness.value );
+        
+        led_hue = hue.value.float_value;
+        led_saturation = saturation.value.float_value;
+        led_brightness = brightness.value.int_value;
+        
+        if (led_on==true){
+            sdk_os_timer_arm (&led_strip_timer, LED_STRIP_SET_DELAY, 0 );
         } else {
-            // printf("led srtip off\n");
-            target_color.red = 0;
-            target_color.green = 0;
-            target_color.blue = 0;
-            target_color.white = 0;
+            printf ("%s: Led on false so stopping Multi PWM\n", __func__);
+            multipwm_set_duty(&pwm_info, 0, 0);
+            multipwm_set_duty(&pwm_info, 1, 0);
+            multipwm_set_duty(&pwm_info, 2, 0);
+            multipwm_set_duty(&pwm_info, 3, 0);
+/*            sdk_os_timer_disarm(&led_strip_timer);
+            multipwm_stop(&pwm_info);*/
         }
-        
-        
-        current_color.red += ((target_color.red * 256) - current_color.red) >> LPF_SHIFT ;
-        current_color.green += ((target_color.green * 256) - current_color.green) >> LPF_SHIFT ;
-        current_color.blue += ((target_color.blue * 256) - current_color.blue) >> LPF_SHIFT ;
-        current_color.white += ((target_color.white * 256) - current_color.white) >> LPF_SHIFT ;
-        
-        multipwm_stop(&pwm_info);
-        multipwm_set_duty(&pwm_info, 0, current_color.white);
-        multipwm_set_duty(&pwm_info, 1, current_color.blue);
-        multipwm_set_duty(&pwm_info, 2, current_color.green);
-        multipwm_set_duty(&pwm_info, 3, current_color.red);
-        multipwm_start(&pwm_info);
-        
-        vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
-*/
+
+    
+
+
+
 
 void led_strip_set (){
 
+    printf("\n%s: Current colour before set r=%d,g=%d, b=%d, w=%d,\n",__func__, current_color.red,current_color.green, current_color.blue, current_color.white );
     if (led_on) {
         // convert HSI to RGBW
-        hsi2rgbw(led_hue, led_saturation, led_brightness, &target_color);
-        printf("\n\n********* h=%d,s=%d,b=%d => r=%d,g=%d, b=%d, w=%d,\n",(int)led_hue,(int)led_saturation,(int)led_brightness, target_color.red,target_color.green, target_color.blue, target_color.white );
+/*        hsi2rgb(led_hue, led_saturation, led_brightness, &target_color);*/
+        HSVtoRGB(led_hue, led_saturation, led_brightness, &target_color);
+        printf("%s: h=%d,s=%d,b=%d => r=%d,g=%d, b=%d\n",__func__, (int)led_hue,(int)led_saturation,(int)led_brightness, target_color.red,target_color.green, target_color.blue );
+        RBGtoRBGW (&target_color);
+
+        printf("%s: h=%d,s=%d,b=%d => r=%d,g=%d, b=%d, w=%d,\n",__func__, (int)led_hue,(int)led_saturation,(int)led_brightness, target_color.red,target_color.green, target_color.blue, target_color.white );
+
     } else {
-        // printf("led srtip off\n");
-        target_color.red = 0;
-        target_color.green = 0;
-        target_color.blue = 0;
-        target_color.white = 0;
+        printf("%s: led srtip off\n", __func__);
+        target_color.red = 1;
+        target_color.green = 1;
+        target_color.blue = 1;
+        target_color.white = 1;
     }
     
+
+    current_color.red = target_color.red * PWM_SCALE;
+    current_color.green = target_color.green * PWM_SCALE;
+    current_color.blue = target_color.blue * PWM_SCALE;
+    current_color.white = target_color.white * PWM_SCALE;
     
-    current_color.red += ((target_color.red * 256) - current_color.red) >> LPF_SHIFT ;
-    current_color.green += ((target_color.green * 256) - current_color.green) >> LPF_SHIFT ;
-    current_color.blue += ((target_color.blue * 256) - current_color.blue) >> LPF_SHIFT ;
-    current_color.white += ((target_color.white * 256) - current_color.white) >> LPF_SHIFT ;
-    
-    printf("Current colour r=%d,g=%d, b=%d, w=%d,\n",current_color.red,current_color.green, current_color.blue, current_color.white );
+    printf("%s:Current colour after set r=%d,g=%d, b=%d, w=%d,\n",__func__, current_color.red,current_color.green, current_color.blue, current_color.white );
    
-    printf ("Stopping multipwm \n");
+    printf ("%s: Stopping multipwm \n",__func__);
     multipwm_stop(&pwm_info);
     multipwm_set_duty(&pwm_info, 0, current_color.white);
     multipwm_set_duty(&pwm_info, 1, current_color.blue);
     multipwm_set_duty(&pwm_info, 2, current_color.green);
     multipwm_set_duty(&pwm_info, 3, current_color.red);
-    multipwm_start(&pwm_info);
-    printf ("Starting multipwm \n");
+/*    if (led_on==true) {*/
+        multipwm_start(&pwm_info);
+        printf ("%s: Starting multipwm \n\n",__func__);
+/*    }*/
     
 }
 
 void led_strip_init (){
     
-    uint8_t pins[] = {WHITE_PWM_PIN, BLUE_PWM_PIN,GREEN_PWM_PIN, RED_PWM_PIN};
-    pwm_info.channels = 4;
+    uint8_t pins[] = {WHITE_PWM_PIN, BLUE_PWM_PIN,GREEN_PWM_PIN, RED_PWM_PIN, DUMMY_PWM_PIN};
+    pwm_info.channels = 5;
     
     multipwm_init(&pwm_info);
-    multipwm_set_freq(&pwm_info, 65535);
+/*    multipwm_set_freq(&pwm_info, 65535);*/
     for (uint8_t i=0; i<pwm_info.channels; i++) {
         multipwm_set_pin(&pwm_info, i, pins[i]);
         printf ("Set pin %d to %d\n",i, pins[i]);
     }
+    multipwm_set_duty(&pwm_info, 4, 65025);
     sdk_os_timer_setfn(&led_strip_timer, led_strip_set, NULL);
     printf ("Sdk_os_timer_Setfn called\n");
     
     xTaskCreate(ir_dump_task, "read_ir_task", 256, NULL, 2, NULL);
+    
+    
+    hsi_colours[white]  = (hsi_color_t) {{0.0, 0.0, 100}};
+    
+    hsi_colours[red] = (hsi_color_t) {{ 0.0, 100.0, 100}};
+    hsi_colours[dark_orange] = (hsi_color_t) { { 15, 100, 78 }};
+    hsi_colours[orange] = (hsi_color_t) { { 30, 100, 100 }};
+    hsi_colours[cream] = (hsi_color_t) { { 45, 100, 100 }};
+    hsi_colours[yellow] = (hsi_color_t) { { 60, 100, 100 }};
+    
+    
+    hsi_colours[green] = (hsi_color_t) { { 120, 100, 100 }};
+    hsi_colours[light_green] = (hsi_color_t) { { 140, 100, 100 }};
+    hsi_colours[sky_blue] = (hsi_color_t) { { 180, 100, 100 }};
+    hsi_colours[green4] = (hsi_color_t) { { 180, 100, 80 }};
+    hsi_colours[green5] = (hsi_color_t) { { 180, 100, 60 }};
+    
+    
+    hsi_colours[blue] = (hsi_color_t) { { 240, 100, 100 }};
+    hsi_colours[light_blue] = (hsi_color_t) { { 255, 100, 100 }};
+    hsi_colours[aubergene] = (hsi_color_t) { { 280, 100, 50 }};
+    hsi_colours[purple] = (hsi_color_t) { { 280, 100, 75 }};
+    hsi_colours[pink] = (hsi_color_t) { { 300, 100, 100 }};
+
 
 }
 
@@ -325,6 +376,28 @@ void led_on_set(homekit_value_t value) {
     }
     
     led_on = value.bool_value;
+    if (led_on == false )
+    {
+/*        sdk_os_timer_disarm(&led_strip_timer);*/
+        printf ("%s: Led on false so stopping Multi PWM\n", __func__);
+        multipwm_set_duty(&pwm_info, 0, 0);
+        multipwm_set_duty(&pwm_info, 1, 0);
+        multipwm_set_duty(&pwm_info, 2, 0);
+        multipwm_set_duty(&pwm_info, 3, 0);
+/*        sdk_os_timer_disarm(&led_strip_timer);
+        multipwm_stop(&pwm_info);
+        gpio_write(WHITE_PWM_PIN, 0);
+        gpio_write(RED_PWM_PIN, 0);
+        gpio_write(GREEN_PWM_PIN, 0);
+        gpio_write(BLUE_PWM_PIN, 0);
+*/
+        sdk_os_timer_arm (&led_strip_timer, LED_STRIP_SET_DELAY, 0 );
+    } else
+    {
+        printf ("%s: Led on TRUE so setting colour\n", __func__);
+        sdk_os_timer_arm (&led_strip_timer, LED_STRIP_SET_DELAY, 0 );
+    }
+    
 }
 
 homekit_value_t led_brightness_get() {
@@ -384,26 +457,10 @@ homekit_accessory_t *accessories[] = {
         }),
         HOMEKIT_SERVICE(LIGHTBULB, .primary = true, .characteristics = (homekit_characteristic_t*[]) {
             HOMEKIT_CHARACTERISTIC(NAME, "LED Strip"),
-            HOMEKIT_CHARACTERISTIC(
-                                   ON, true,
-                                   .getter = led_on_get,
-                                   .setter = led_on_set
-                                   ),
-            HOMEKIT_CHARACTERISTIC(
-                                   BRIGHTNESS, 100,
-                                   .getter = led_brightness_get,
-                                   .setter = led_brightness_set
-                                   ),
-            HOMEKIT_CHARACTERISTIC(
-                                   HUE, 0,
-                                   .getter = led_hue_get,
-                                   .setter = led_hue_set
-                                   ),
-            HOMEKIT_CHARACTERISTIC(
-                                   SATURATION, 0,
-                                   .getter = led_saturation_get,
-                                   .setter = led_saturation_set
-                                   ),
+            &on,
+            &saturation,
+            &hue,
+            &brightness,
             &red_gpio,
             &green_gpio,
             &blue_gpio,
@@ -437,15 +494,12 @@ void accessory_init (void ){
 }
 
 void user_init(void) {
-
-       standard_init (&name, &manufacturer, &model, &serial, &revision);
-
-        led_strip_init ();
     
-/*    xTaskCreate(led_strip_send_task, "led_strip_send_task", 256, NULL, 2, NULL);*/
-
+    standard_init (&name, &manufacturer, &model, &serial, &revision);
+    
+    led_strip_init ();
     
     wifi_config_init(DEVICE_NAME, NULL, on_wifi_ready);
-
-
+    
+    
 }
