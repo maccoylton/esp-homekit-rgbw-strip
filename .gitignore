@@ -2,4 +2,5 @@ esp-homekit-rgbw-strip.xcodeproj
 build/
 firmware/
 src/.DS_Store
+src/udplog-client
 .DS_Store

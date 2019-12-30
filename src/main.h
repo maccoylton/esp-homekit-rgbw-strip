@@ -9,11 +9,6 @@
 #ifndef main_h
 #define main_h
 
-#include <stdio.h>
-#include <ir/ir.h>
-#include <ir/raw.h>
-#include <ir/generic.h>
-
 static ir_generic_config_t nec_protocol_config = {
     .header_mark = 9000,
     .header_space = -4500,
@@ -58,7 +53,5 @@ int8_t mh_off[]={0 , -1, 31, -32};
 int8_t mh_orange[]={0, -1, 64, -65};
 int8_t mh_sky_blue[]={0 , -1, 76, -77 };
 int8_t mh_flash[]={0 , -1, 77, -78 };
-
-void led_strip_set();
 
 #endif /* main_h */
