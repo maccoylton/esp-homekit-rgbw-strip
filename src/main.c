@@ -187,26 +187,18 @@ void ir_dump_task(void *arg) {
             case strobe_button:
                 printf ("%s: LED command Strobe\n",__func__);
                 effect = strobe_effect;
-                colours_strobe.value.bool_value = !colours_strobe.value.bool_value;
-                homekit_characteristic_notify(&colours_strobe,colours_strobe.value );
                 break;
             case smooth_button:
                 printf ("%s: LED command Smooth\n",__func__);
                 effect = smooth_effect;
-                colours_smooth.value.bool_value = !colours_smooth.value.bool_value;
-                homekit_characteristic_notify(&colours_smooth,colours_smooth.value );
                 break;
             case fade_button:
                 printf ("%s: LED command Fade\n",__func__);
                 effect = fade_effect;
-                colours_fade.value.bool_value = !colours_fade.value.bool_value ;
-                homekit_characteristic_notify(&colours_fade,colours_fade.value );
                 break;
             case flash_buton:
                 printf ("%s: LED command Flash\n",__func__);
                 effect = flash_effect;
-                colours_flash.value.bool_value = !colours_flash.value.bool_value ;
-                homekit_characteristic_notify(&colours_flash,colours_flash.value );
                 break;
             case aubergene_button:
             case cream_button:
