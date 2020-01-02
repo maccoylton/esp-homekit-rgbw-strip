@@ -118,6 +118,12 @@ homekit_characteristic_t green_gpio   = HOMEKIT_CHARACTERISTIC_( CUSTOM_GREEN_GP
 homekit_characteristic_t blue_gpio    = HOMEKIT_CHARACTERISTIC_( CUSTOM_BLUE_GPIO, BLUE_PWM_PIN, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 homekit_characteristic_t white_gpio   = HOMEKIT_CHARACTERISTIC_( CUSTOM_WHITE_GPIO, WHITE_PWM_PIN, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(on_update) );
 
+homekit_characteristic_t colours_gpio_test   = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_GPIO_TEST, false , .setter=colours_gpio_test_set, .getter=colours_gpio_test_get);
+homekit_characteristic_t colours_strobe = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_STROBE, false , .setter=colours_strobe_set, .getter=colours_strobe_get);
+homekit_characteristic_t colours_flash = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_FLASH, false , .setter=colours_flash_set, .getter=colours_flash_get);
+homekit_characteristic_t colours_fade = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_FADE, false , .setter=colours_fade_set, .getter=colours_smooth_get);
+homekit_characteristic_t colours_smooth = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_SMOOTH, false ,.setter=colours_smooth_set, .getter=colours_smooth_get);
+
 
 double __ieee754_remainder(double x, double y) {
     return x - y * floor(x/y);
@@ -133,6 +139,7 @@ void ir_dump_task(void *arg) {
     int8_t *buffer = malloc(buffer_size);
     int size=0;
     
+    
     while (1) {
         size = ir_recv(nec_decoder, 0, buffer, buffer_size);
         if (size <= 0)
@@ -147,7 +154,8 @@ void ir_dump_task(void *arg) {
         printf ("\n%s: buffer[2]=%d, mh_on[2]=%d, mh_off[2]=%d, buffer[3]=%d, mh_on[3]=%d, mh_off[3]=%d\n", __func__, buffer[2], mh_on[2], mh_off[2], buffer[3], mh_on[3], mh_off[3]);
         
         int cmd = buffer[2];
-        
+        int effect = off_effect;
+                
         switch (cmd)
         {
             case on_button:
@@ -157,53 +165,65 @@ void ir_dump_task(void *arg) {
                 homekit_characteristic_notify(&on,on.value );
                 sdk_os_timer_arm (&save_timer, SAVE_DELAY, 0 );
                 break;
-            case off:
+            case off_button:
                 printf ("%s: LED command Off\n",__func__);
                 led_on=false;
                 on.value = HOMEKIT_BOOL (false);
                 homekit_characteristic_notify(&on,on.value );
                 sdk_os_timer_arm (&save_timer, SAVE_DELAY, 0 );
                 break;
-            case up:
+            case up_button:
                 printf ("%s: LED command Up\n",__func__);
                 if (brightness.value.int_value <= 90){
                     brightness.value.int_value +=10;
                 }
                 break;
-            case down:
+            case down_button:
                 printf ("%s: LED command Down\n",__func__);
                 if (brightness.value.int_value >=10){
                     brightness.value.int_value -=10;
                 }
                 break;
-            case strobe:
+            case strobe_button:
                 printf ("%s: LED command Strobe\n",__func__);
+                effect = strobe_effect;
+                colours_strobe.value.bool_value = !colours_strobe.value.bool_value;
+                homekit_characteristic_notify(&colours_strobe,colours_strobe.value );
                 break;
-            case smooth:
+            case smooth_button:
                 printf ("%s: LED command Smooth\n",__func__);
+                effect = smooth_effect;
+                colours_smooth.value.bool_value = !colours_smooth.value.bool_value;
+                homekit_characteristic_notify(&colours_smooth,colours_smooth.value );
                 break;
-            case fade:
+            case fade_button:
                 printf ("%s: LED command Fade\n",__func__);
+                effect = fade_effect;
+                colours_fade.value.bool_value = !colours_fade.value.bool_value ;
+                homekit_characteristic_notify(&colours_fade,colours_fade.value );
                 break;
-            case flash:
+            case flash_buton:
                 printf ("%s: LED command Flash\n",__func__);
+                effect = flash_effect;
+                colours_flash.value.bool_value = !colours_flash.value.bool_value ;
+                homekit_characteristic_notify(&colours_flash,colours_flash.value );
                 break;
-            case aubergene:
-            case cream:
-            case purple:
-            case pink:
-            case blue:
-            case light_green:
-            case green5:
-            case white:
-            case light_blue:
-            case dark_orange:
-            case red:
-            case green:
-            case yellow:
-            case green4:
-            case orange:
-            case sky_blue:
+            case aubergene_button:
+            case cream_button:
+            case purple_button:
+            case pink_button:
+            case blue_button:
+            case light_green_button:
+            case green5_button:
+            case white_button:
+            case light_blue_button:
+            case dark_orange_button:
+            case red_button:
+            case green_button:
+            case yellow_button:
+            case green4_button:
+            case orange_button:
+            case sky_blue_button:
                 printf ("%s: LED command %d\n",__func__, cmd);
                 hue.value = HOMEKIT_FLOAT (hsi_colours[cmd].hue);
                 saturation.value = HOMEKIT_FLOAT (hsi_colours[cmd].saturation);
@@ -213,22 +233,27 @@ void ir_dump_task(void *arg) {
                 printf ("%s: LED command unknown %d\n",__func__, buffer[cmd]);
                 break;
         }
-        
+
         homekit_characteristic_notify(&hue,hue.value );
         homekit_characteristic_notify(&saturation,saturation.value );
         homekit_characteristic_notify(&brightness,brightness.value );
         sdk_os_timer_arm (&save_timer, SAVE_DELAY, 0 );
-
+        
         led_hue = hue.value.float_value;
         led_saturation = saturation.value.float_value;
         led_brightness = brightness.value.int_value;
-        
-        if (led_on==true){
-            sdk_os_timer_arm (&rgbw_set_timer, RGBW_STRIP_SET_DELAY, 0 );
-        } else {
-            printf ("%s: Led on false so stopping Multi PWM\n", __func__);
-            multipwm_stop(&pwm_info);
-            sdk_os_timer_disarm (&rgbw_set_timer);
+
+        colour_effect_start_stop (effect);
+        if (effect == off_effect ) /* if colour effect is off normal logic applies, otherise start the effect */
+        {
+            if (led_on==true){
+                sdk_os_timer_arm (&rgbw_set_timer, RGBW_SET_DELAY, 0 );
+            } else {
+                printf ("%s: Led on false so stopping Multi PWM\n", __func__);
+                set_colours (0, 0, 0, 0);
+                multipwm_stop(&pwm_info);
+                sdk_os_timer_disarm (&rgbw_set_timer);
+            }
         }
     }
 }
@@ -241,25 +266,25 @@ void led_strip_init (){
 
     rgbw_lights_init();
     
-    hsi_colours[white]  = (hsi_color_t) {{0.0, 0.0, 100}};
+    hsi_colours[white_button]  = (hsi_color_t) {{0.0, 0.0, 100}};
     
-    hsi_colours[red] = (hsi_color_t) {{ 0.0, 100.0, 100}};
-    hsi_colours[dark_orange] = (hsi_color_t) { { 15, 100, 78 }};
-    hsi_colours[orange] = (hsi_color_t) { { 30, 100, 100 }};
-    hsi_colours[cream] = (hsi_color_t) { { 45, 100, 100 }};
-    hsi_colours[yellow] = (hsi_color_t) { { 60, 100, 100 }};
+    hsi_colours[red_button] = (hsi_color_t) {{ 0.0, 100.0, 100}};
+    hsi_colours[dark_orange_button] = (hsi_color_t) { { 15, 100, 78 }};
+    hsi_colours[orange_button] = (hsi_color_t) { { 30, 100, 100 }};
+    hsi_colours[cream_button] = (hsi_color_t) { { 45, 100, 100 }};
+    hsi_colours[yellow_button] = (hsi_color_t) { { 60, 100, 100 }};
     
-    hsi_colours[green] = (hsi_color_t) { { 120, 100, 100 }};
-    hsi_colours[light_green] = (hsi_color_t) { { 140, 100, 100 }};
-    hsi_colours[sky_blue] = (hsi_color_t) { { 180, 100, 100 }};
-    hsi_colours[green4] = (hsi_color_t) { { 180, 100, 80 }};
-    hsi_colours[green5] = (hsi_color_t) { { 180, 100, 60 }};
+    hsi_colours[green_button] = (hsi_color_t) { { 120, 100, 100 }};
+    hsi_colours[light_green_button] = (hsi_color_t) { { 140, 100, 100 }};
+    hsi_colours[sky_blue_button] = (hsi_color_t) { { 180, 100, 100 }};
+    hsi_colours[green4_button] = (hsi_color_t) { { 180, 100, 80 }};
+    hsi_colours[green5_button] = (hsi_color_t) { { 180, 100, 60 }};
     
-    hsi_colours[blue] = (hsi_color_t) { { 240, 100, 100 }};
-    hsi_colours[light_blue] = (hsi_color_t) { { 255, 100, 100 }};
-    hsi_colours[aubergene] = (hsi_color_t) { { 280, 100, 50 }};
-    hsi_colours[purple] = (hsi_color_t) { { 280, 100, 75 }};
-    hsi_colours[pink] = (hsi_color_t) { { 300, 100, 100 }};
+    hsi_colours[blue_button] = (hsi_color_t) { { 240, 100, 100 }};
+    hsi_colours[light_blue_button] = (hsi_color_t) { { 255, 100, 100 }};
+    hsi_colours[aubergene_button] = (hsi_color_t) { { 280, 100, 50 }};
+    hsi_colours[purple_button] = (hsi_color_t) { { 280, 100, 75 }};
+    hsi_colours[pink_button] = (hsi_color_t) { { 300, 100, 100 }};
 
     xTaskCreate(ir_dump_task, "read_ir_task", 256, NULL, 2, NULL);
 
@@ -291,6 +316,11 @@ homekit_accessory_t *accessories[] = {
             &wifi_reset,
             &wifi_check_interval,
             &task_stats,
+            &colours_gpio_test,
+            &colours_strobe,
+            &colours_flash,
+            &colours_fade,
+            &colours_smooth,
             NULL
         }),
         NULL
@@ -319,6 +349,11 @@ void accessory_init (void ){
     /* initalise anything you don't want started until wifi and pairing is confirmed */
     get_sysparam_info();
     printf ("%s: GPIOS are set as follows : W=%d, R=%d, G=%d, B=%d\n",__func__, white_gpio.value.int_value,red_gpio.value.int_value, green_gpio.value.int_value, blue_gpio.value.int_value );
+    
+    /* sent out values loded from flash, if nothing was loaded from flash then this will be default values */
+    homekit_characteristic_notify(&hue,hue.value);
+    homekit_characteristic_notify(&saturation,saturation.value );
+    homekit_characteristic_notify(&brightness,brightness.value );
 }
 
 void user_init(void) {

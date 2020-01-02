@@ -26,7 +26,7 @@ static ir_generic_config_t nec_protocol_config = {
 };
 
 
-enum {strobe=0, aubergene=4, up=9, cream=10,smooth=12, on_button=13, purple=14, pink=15, blue=17, light_green=18,green5=20, white=21, light_blue=22, dark_orange=23, red=25, fade=26, green=27, yellow=28, down=29, green4=30, off=31, orange=64, sky_blue=76, flash=77} rest_buttons;
+enum {strobe_button=0, aubergene_button=4, up_button=9, cream_button=10,smooth_button=12, on_button=13, purple_button=14, pink_button=15, blue_button=17, light_green_button=18,green5_button=20, white_button=21, light_blue_button=22, dark_orange_button=23, red_button=25, fade_button=26, green_button=27, yellow_button=28, down_button=29, green4_button=30, off_button=31, orange_button=64, sky_blue_button=76, flash_buton=77} rest_buttons;
 
 
 int8_t mh_strobe[]={0 , -1, 0, -1 };
