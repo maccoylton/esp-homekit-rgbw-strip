@@ -85,7 +85,7 @@ rgb_color_t current_color = { { 0, 0, 0, 0 } };
 rgb_color_t target_color = { { 0, 0, 0, 0 } };
 
 homekit_characteristic_t wifi_reset   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_RESET, false, .setter=wifi_reset_set);
-homekit_characteristic_t wifi_check_interval   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_CHECK_INTERVAL, 10, .setter=wifi_check_interval_set);
+homekit_characteristic_t wifi_check_interval   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_CHECK_INTERVAL, 200, .setter=wifi_check_interval_set);
 /* checks the wifi is connected and flashes status led to indicated connected */
 homekit_characteristic_t task_stats   = HOMEKIT_CHARACTERISTIC_(CUSTOM_TASK_STATS, false , .setter=task_stats_set);
 
@@ -151,7 +151,9 @@ void ir_dump_task(void *arg) {
         }
         printf("\n");
         
+        /*
         printf ("\n%s: buffer[2]=%d, mh_on[2]=%d, mh_off[2]=%d, buffer[3]=%d, mh_on[3]=%d, mh_off[3]=%d\n", __func__, buffer[2], mh_on[2], mh_off[2], buffer[3], mh_on[3], mh_off[3]);
+        */
         
         int cmd = buffer[2];
         int effect = off_effect;
@@ -323,7 +325,7 @@ homekit_accessory_t *accessories[] = {
 homekit_server_config_t config = {
     .accessories = accessories,
     .password = "111-11-111" ,
-    .setupId = "1234",
+    .setupId = "1342",
     .on_event = on_homekit_event
 };
 
@@ -341,7 +343,8 @@ void accessory_init (void ){
     /* initalise anything you don't want started until wifi and pairing is confirmed */
     get_sysparam_info();
     printf ("%s: GPIOS are set as follows : W=%d, R=%d, G=%d, B=%d\n",__func__, white_gpio.value.int_value,red_gpio.value.int_value, green_gpio.value.int_value, blue_gpio.value.int_value );
-    
+    led_strip_init ();
+
     /* sent out values loded from flash, if nothing was loaded from flash then this will be default values */
     homekit_characteristic_notify(&hue,hue.value);
     homekit_characteristic_notify(&saturation,saturation.value );
@@ -352,7 +355,6 @@ void user_init(void) {
     
     standard_init (&name, &manufacturer, &model, &serial, &revision);
     
-    led_strip_init ();
     
     wifi_config_init(DEVICE_NAME, NULL, on_wifi_ready);
     
