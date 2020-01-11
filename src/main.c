@@ -260,6 +260,11 @@ void led_strip_init (){
 
     rgbw_lights_init();
     
+    /* store the values loaded, if none loaded then it wil be defaults */
+    led_hue = hue.value.float_value;
+    led_saturation = saturation.value.float_value;
+    led_brightness = brightness.value.int_value;
+    
     hsi_colours[white_button]  = (hsi_color_t) {{0.0, 0.0, 100}};
     
     hsi_colours[red_button] = (hsi_color_t) {{ 0.0, 100.0, 100}};
