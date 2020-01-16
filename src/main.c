@@ -123,7 +123,7 @@ homekit_characteristic_t colours_strobe = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS
 homekit_characteristic_t colours_flash = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_FLASH, false , .setter=colours_flash_set, .getter=colours_flash_get);
 homekit_characteristic_t colours_fade = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_FADE, false , .setter=colours_fade_set, .getter=colours_smooth_get);
 homekit_characteristic_t colours_smooth = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_SMOOTH, false ,.setter=colours_smooth_set, .getter=colours_smooth_get);
-
+homekit_characteristic_t pure_white   = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_PURE_WHITE, false , .setter=colours_pure_white_set);
 
 double __ieee754_remainder(double x, double y) {
     return x - y * floor(x/y);
@@ -320,6 +320,7 @@ homekit_accessory_t *accessories[] = {
             &colours_flash,
             &colours_fade,
             &colours_smooth,
+            &pure_white,
             NULL
         }),
         NULL
@@ -354,6 +355,8 @@ void accessory_init (void ){
     homekit_characteristic_notify(&hue,hue.value);
     homekit_characteristic_notify(&saturation,saturation.value );
     homekit_characteristic_notify(&brightness,brightness.value );
+    homekit_characteristic_notify(&pure_white,pure_white.value );
+    
 }
 
 void user_init(void) {
