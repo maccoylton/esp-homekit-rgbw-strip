@@ -67,7 +67,7 @@
 // and apply the four other parameters in the accessories_information section
 #include "ota-api.h"
 
-hsi_color_t hsi_colours[77];
+hsi_color_t hsi_colours[16];
 const int status_led_gpio = 2; /*set the gloabl variable for the led to be sued for showing status */
 int led_off_value=1; /* global varibale to support LEDs set to 0 where the LED is connected to GND, 1 where +3.3v */
 // Global variables
@@ -140,6 +140,7 @@ void ir_dump_task(void *arg) {
     int16_t buffer_size = sizeof(uint8_t) * 1024;
     int8_t *buffer = malloc(buffer_size);
     int size=0;
+    int index = 0;
     
     
     while (1) {
@@ -159,7 +160,9 @@ void ir_dump_task(void *arg) {
         
         int cmd = buffer[2];
         int effect = off_effect;
-                
+        
+        index = 99;
+        
         switch (cmd)
         {
             case on_button:
@@ -205,31 +208,65 @@ void ir_dump_task(void *arg) {
                 effect = flash_effect;
                 break;
             case aubergene_button:
+                index = aubergene_index;
+                break;
             case cream_button:
+                index = cream_index;
+                break;
             case purple_button:
+                index = purple_index;
+                break;
             case pink_button:
+                index = pink_index;
+                break;
             case blue_button:
+                index = blue_index;
+                break;
             case light_green_button:
+                index = light_green_index;
+                break;
             case green5_button:
+                index = green5_index;
+                break;
             case white_button:
+                index = white_index;
+                break;
             case light_blue_button:
+                index = light_blue_index;
+                break;
             case dark_orange_button:
+                index = dark_orange_index;
+                break;
             case red_button:
+                index = red_index;
+                break;
             case green_button:
+                index = green_index;
+                break;
             case yellow_button:
+                index = yellow_index;
+                break;
             case green4_button:
+                index = green4_index;
+                break;
             case orange_button:
+                index = orange_index;
+                break;
             case sky_blue_button:
-                printf ("%s: LED command %d\n",__func__, cmd);
-                hue.value = HOMEKIT_FLOAT (hsi_colours[cmd].hue);
-                saturation.value = HOMEKIT_FLOAT (hsi_colours[cmd].saturation);
-                brightness.value = HOMEKIT_INT (hsi_colours[cmd].brightness);
+                index = sky_blue_index;
                 break;
             default:
                 printf ("%s: LED command unknown %d\n",__func__, buffer[cmd]);
                 break;
         }
 
+        if (index != 99){
+            printf ("%s: LED command %d\n",__func__, cmd);
+            hue.value = HOMEKIT_FLOAT (hsi_colours[index].hue);
+            saturation.value = HOMEKIT_FLOAT (hsi_colours[index].saturation);
+            brightness.value = HOMEKIT_INT (hsi_colours[index].brightness);
+        }
+        
         homekit_characteristic_notify(&hue,hue.value );
         homekit_characteristic_notify(&saturation,saturation.value );
         homekit_characteristic_notify(&brightness,brightness.value );
@@ -267,25 +304,25 @@ void led_strip_init (){
     led_saturation = saturation.value.float_value;
     led_brightness = brightness.value.int_value;
     
-    hsi_colours[white_button]  = (hsi_color_t) {{0.0, 0.0, 100}};
+    hsi_colours[white_index]  = (hsi_color_t) {{0.0, 0.0, 100}};
     
-    hsi_colours[red_button] = (hsi_color_t) {{ 0.0, 100.0, 100}};
-    hsi_colours[dark_orange_button] = (hsi_color_t) { { 15, 100, 78 }};
-    hsi_colours[orange_button] = (hsi_color_t) { { 30, 100, 100 }};
-    hsi_colours[cream_button] = (hsi_color_t) { { 45, 100, 100 }};
-    hsi_colours[yellow_button] = (hsi_color_t) { { 60, 100, 100 }};
+    hsi_colours[red_index] = (hsi_color_t) {{ 0.0, 100.0, 100}};
+    hsi_colours[dark_orange_index] = (hsi_color_t) { { 15, 100, 78 }};
+    hsi_colours[orange_index] = (hsi_color_t) { { 30, 100, 100 }};
+    hsi_colours[cream_index] = (hsi_color_t) { { 45, 100, 100 }};
+    hsi_colours[yellow_index] = (hsi_color_t) { { 60, 100, 100 }};
     
-    hsi_colours[green_button] = (hsi_color_t) { { 120, 100, 100 }};
-    hsi_colours[light_green_button] = (hsi_color_t) { { 140, 100, 100 }};
-    hsi_colours[sky_blue_button] = (hsi_color_t) { { 180, 100, 100 }};
-    hsi_colours[green4_button] = (hsi_color_t) { { 180, 100, 80 }};
-    hsi_colours[green5_button] = (hsi_color_t) { { 180, 100, 60 }};
+    hsi_colours[green_index] = (hsi_color_t) { { 120, 100, 100 }};
+    hsi_colours[light_green_index] = (hsi_color_t) { { 140, 100, 100 }};
+    hsi_colours[sky_blue_index] = (hsi_color_t) { { 180, 100, 100 }};
+    hsi_colours[green4_index] = (hsi_color_t) { { 180, 100, 80 }};
+    hsi_colours[green5_index] = (hsi_color_t) { { 180, 100, 60 }};
     
-    hsi_colours[blue_button] = (hsi_color_t) { { 240, 100, 100 }};
-    hsi_colours[light_blue_button] = (hsi_color_t) { { 255, 100, 100 }};
-    hsi_colours[aubergene_button] = (hsi_color_t) { { 280, 100, 50 }};
-    hsi_colours[purple_button] = (hsi_color_t) { { 280, 100, 75 }};
-    hsi_colours[pink_button] = (hsi_color_t) { { 300, 100, 100 }};
+    hsi_colours[blue_index] = (hsi_color_t) { { 240, 100, 100 }};
+    hsi_colours[light_blue_index] = (hsi_color_t) { { 255, 100, 100 }};
+    hsi_colours[aubergene_index] = (hsi_color_t) { { 280, 100, 50 }};
+    hsi_colours[purple_index] = (hsi_color_t) { { 280, 100, 75 }};
+    hsi_colours[pink_index] = (hsi_color_t) { { 300, 100, 100 }};
 
     xTaskCreate(ir_dump_task, "read_ir_task", 256, NULL, 2, NULL);
 
