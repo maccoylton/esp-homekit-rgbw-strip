@@ -51,6 +51,8 @@
 #define DEVICE_MODEL "RGBW"
 #define DEVICE_SERIAL "12345678"
 #define FW_VERSION "1.0"
+#define IR_RECEIVE_BUFFER_SIZE 128
+#define IR_DECODE_BUFFER_SIZE 32
 
 #define LPF_SHIFT 8 // divide by 256
 #define LPF_INTERVAL 10  // in milliseconds
@@ -67,7 +69,8 @@
 // and apply the four other parameters in the accessories_information section
 #include "ota-api.h"
 
-hsi_color_t hsi_colours[16];
+/*hsi_color_t hsi_colours[16];*/
+
 const int status_led_gpio = 2; /*set the gloabl variable for the led to be sued for showing status */
 int led_off_value=1; /* global varibale to support LEDs set to 0 where the LED is connected to GND, 1 where +3.3v */
 // Global variables
@@ -83,6 +86,8 @@ int blue_default_gpio = BLUE_PWM_PIN;
 
 rgb_color_t current_color = { { 0, 0, 0, 0 } };
 rgb_color_t target_color = { { 0, 0, 0, 0 } };
+
+hsi_color_t current_colour_hsi  = { { 0, 0, 0 } };
 
 homekit_characteristic_t wifi_reset   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_RESET, false, .setter=wifi_reset_set);
 homekit_characteristic_t wifi_check_interval   = HOMEKIT_CHARACTERISTIC_(CUSTOM_WIFI_CHECK_INTERVAL, 200, .setter=wifi_check_interval_set);
@@ -127,22 +132,19 @@ homekit_characteristic_t colours_fade = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_F
 homekit_characteristic_t colours_smooth = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_SMOOTH, false ,.setter=colours_smooth_set, .getter=colours_smooth_get);
 homekit_characteristic_t pure_white   = HOMEKIT_CHARACTERISTIC_(CUSTOM_COLOURS_PURE_WHITE, false , .setter=colours_pure_white_set);
 
-double __ieee754_remainder(double x, double y) {
-    return x - y * floor(x/y);
-}
 
 void ir_dump_task(void *arg) {
     
-    ir_rx_init(IR_RX_GPIO, 1024);
+    ir_rx_init(IR_RX_GPIO, IR_RECEIVE_BUFFER_SIZE);
     
     ir_decoder_t *nec_decoder = ir_generic_make_decoder(&nec_protocol_config);
     
-    int16_t buffer_size = sizeof(uint8_t) * 1024;
+    int16_t buffer_size = sizeof(uint8_t) * IR_DECODE_BUFFER_SIZE;
     int8_t *buffer = malloc(buffer_size);
     int size=0;
-    int index = 0;
     
-    
+   printf("%s: Start, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
+
     while (1) {
         size = ir_recv(nec_decoder, 0, buffer, buffer_size);
         if (size <= 0)
@@ -161,8 +163,7 @@ void ir_dump_task(void *arg) {
         int cmd = buffer[2];
         int effect = off_effect;
         
-        index = 99;
-        
+
         switch (cmd)
         {
             case on_button:
@@ -208,64 +209,64 @@ void ir_dump_task(void *arg) {
                 effect = flash_effect;
                 break;
             case aubergene_button:
-                index = aubergene_index;
+                current_colour_hsi = aubergene_colour;
                 break;
             case cream_button:
-                index = cream_index;
+                current_colour_hsi = cream_colour;
                 break;
             case purple_button:
-                index = purple_index;
+                current_colour_hsi = purple_colour;
                 break;
             case pink_button:
-                index = pink_index;
+                current_colour_hsi = pink_colour;
                 break;
             case blue_button:
-                index = blue_index;
+                current_colour_hsi = blue_colour;
                 break;
             case light_green_button:
-                index = light_green_index;
+                current_colour_hsi = light_green_colour;
                 break;
             case green5_button:
-                index = green5_index;
+                current_colour_hsi = green5_colour;
                 break;
             case white_button:
-                index = white_index;
+                current_colour_hsi = white_colour;
                 break;
             case light_blue_button:
-                index = light_blue_index;
+                current_colour_hsi = light_blue_colour;
                 break;
             case dark_orange_button:
-                index = dark_orange_index;
+                current_colour_hsi = dark_orange_colour;
                 break;
             case red_button:
-                index = red_index;
+                current_colour_hsi = red_colour;
                 break;
             case green_button:
-                index = green_index;
+                current_colour_hsi = green_colour;
                 break;
             case yellow_button:
-                index = yellow_index;
+                current_colour_hsi = yellow_colour;
                 break;
             case green4_button:
-                index = green4_index;
+                current_colour_hsi = green4_colour;
                 break;
             case orange_button:
-                index = orange_index;
+                current_colour_hsi = orange_colour;
                 break;
             case sky_blue_button:
-                index = sky_blue_index;
+                current_colour_hsi = sky_blue_colour;
                 break;
             default:
                 printf ("%s: LED command unknown %d\n",__func__, buffer[cmd]);
                 break;
         }
 
-        if (index != 99){
-            printf ("%s: LED command %d\n",__func__, cmd);
-            hue.value = HOMEKIT_FLOAT (hsi_colours[index].hue);
-            saturation.value = HOMEKIT_FLOAT (hsi_colours[index].saturation);
-            brightness.value = HOMEKIT_INT (hsi_colours[index].brightness);
-        }
+        printf ("%s: LED command %d\n",__func__, cmd);
+
+        
+        hue.value = HOMEKIT_FLOAT (current_colour_hsi.hue);
+        saturation.value = HOMEKIT_FLOAT (current_colour_hsi.saturation);
+        brightness.value = HOMEKIT_INT (current_colour_hsi.brightness);
         
         homekit_characteristic_notify(&hue,hue.value );
         homekit_characteristic_notify(&saturation,saturation.value );
@@ -292,10 +293,12 @@ void ir_dump_task(void *arg) {
 }
 
 
+
 void led_strip_init (){
     
 
     /* set th default values for the GPIOs incase we need to rest them later */
+    printf("%s: Start, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
 
     rgbw_lights_init();
     
@@ -304,7 +307,7 @@ void led_strip_init (){
     led_saturation = saturation.value.float_value;
     led_brightness = brightness.value.int_value;
     
-    hsi_colours[white_index]  = (hsi_color_t) {{0.0, 0.0, 100}};
+/*    hsi_colours[white_index]  = (hsi_color_t) {{0.0, 0.0, 100}};
     
     hsi_colours[red_index] = (hsi_color_t) {{ 0.0, 100.0, 100}};
     hsi_colours[dark_orange_index] = (hsi_color_t) { { 15, 100, 78 }};
@@ -323,8 +326,12 @@ void led_strip_init (){
     hsi_colours[aubergene_index] = (hsi_color_t) { { 280, 100, 50 }};
     hsi_colours[purple_index] = (hsi_color_t) { { 280, 100, 75 }};
     hsi_colours[pink_index] = (hsi_color_t) { { 300, 100, 100 }};
-
+*/
+/*
     xTaskCreate(ir_dump_task, "read_ir_task", 256, NULL, 2, NULL);
+*/
+    
+    printf("%s: Snd, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
 
 }
 
@@ -378,8 +385,13 @@ homekit_server_config_t config = {
 
 void recover_from_reset (int reason){
     /* called if we restarted abnormally */
+    printf("%s: Start, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
+
     printf ("%s: reason %d\n", __func__, reason);
     load_characteristic_from_flash(&on);
+
+    printf("%s: End, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
+
 }
 
 void accessory_init_not_paired (void) {
@@ -388,6 +400,8 @@ void accessory_init_not_paired (void) {
 
 void accessory_init (void ){
     /* initalise anything you don't want started until wifi and pairing is confirmed */
+    printf("%s: Start, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
+
     get_sysparam_info();
     printf ("%s: GPIOS are set as follows : W=%d, R=%d, G=%d, B=%d\n",__func__, white_gpio.value.int_value,red_gpio.value.int_value, green_gpio.value.int_value, blue_gpio.value.int_value );
     led_strip_init ();
@@ -397,7 +411,9 @@ void accessory_init (void ){
     homekit_characteristic_notify(&saturation,saturation.value );
     homekit_characteristic_notify(&brightness,brightness.value );
     homekit_characteristic_notify(&pure_white,pure_white.value );
-    
+
+    printf("%s: End, Freep Heap=%d\n", __func__, xPortGetFreeHeapSize());
+
 }
 
 void user_init(void) {

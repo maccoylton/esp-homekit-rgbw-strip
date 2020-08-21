@@ -1,0 +1,152 @@
+rBoot4LCM v1.0.1
+         0003ffff @ 1818
+         0003ffff @ 1028 => count: 1
+led_pin=2,  polarity=0,  led_valid=1
+Flash Size:   32 Mbit
+Flash Mode:   DOUT
+Flash Speed:  40 MHz
+rBoot Option: Big flash
+rBoot Option: RTC data
+
+Booting rom 0 at 2000, load addr 707d0.
+␌N��NQ
+�a�Q�B=�Z␑`C␁�TPQ�␑q␁���rP�␀␁�VE�␑@␌�i�@����␝	�ڂ��Q���rP�␅1�VE␋X@␌�i␄	5��Z�␂␐
+!!f�e 2020 10:54:35
+phy ver: 273, pp ver: 8.3
+
+standard_init: Start, Freep Heap=44820
+standard_init: RTC power cycle count = 1
+standard_init:SDK version: 0.9.9, free heap 42336
+get_sysparam_info: Sysparam base address 4157440, num_sectors 4
+get_sysparam_info: sysparam name: wifi_ssid, value:MacCoylton-WiFi, key length:9, value length:15
+get_sysparam_info: sysparam name: wifi_password, value:**********
+get_sysparam_info: sysparam name: On, value:n, key length:2, value length:1
+  WiFi check interval:
+    0a 00 00 00
+get_sysparam_info: while loop status 1
+load_characteristic_from_flash: WiFi check interval: int: 10
+homekit_characteristic_bounds_check: WiFi check interval: Checking integer bounds
+load_characteristic_from_flash: ota_beta: bool: load_characteristic_from_flash: Error in sysparams error:1 loading characteristic
+load_characteristic_from_flash: lcm_beta: bool: load_characteristic_from_flash: Error in sysparams error:1 loading characteristic
+Create accessory name
+|manuf='manuf_unknown' serial='CC:50:E3:2B:22:18' model='model_unknown' revision='0.0.0' c#=0
+wifi_check_stop_start Starting Task
+standard_init: End, Freep Heap=39848
+>>> wifi_config: Initializing WiFi config
+>>> wifi_config: Connecting to MacCoylton-WiFi
+mode : sta(cc:50:e3:2b:22:18)
+add if0
+
+checkWifiTask : no check performed, check interval: 10, accessory paired: 0Free Heap=38472, Free Stack=88
+scandone
+add 0
+aid 17
+cnt 
+
+connected with MacCoylton-WiFi, channel 1
+dhcp client start...
+ip:192.168.1.80,mask:255.255.255.0,gw:192.168.1.254
+>>> wifi_config: Connected to WiFi network
+on_wifi_ready: , Freep Heap=41904
+get_sysparam_info: Sysparam base address 4157440, num_sectors 4
+get_sysparam_info: sysparam name: wifi_ssid, value:MacCoylton-WiFi, key length:9, value length:15
+get_sysparam_info: sysparam name: wifi_password, value:**********
+get_sysparam_info: sysparam name: On, value:n, key length:2, value length:1
+  WiFi check interval:
+    0a 00 00 00
+get_sysparam_info: while loop status 1
+on_wifi_ready Reset Reason: Default Reset
+on_wifi_ready: Exception Cause: 0
+EPC 1: 0
+EPC 2: 0
+EPC 3: 0
+Exv virtul address: 0
+DEPC: 0
+Return Address:0
+on_wifi_ready: Calling homekit_server_init, Freep Heap=41904
+on_wifi_ready: After calling homekit_Server_init, Freep Heap=28772
+on_wifi_ready: End, Freep Heap=28772
+
+checkWifiTask : no check performed, check interval: 10, accessory paired: 0Free Heap=28772, Free Stack=88
+>>> HomeKit: Starting server
+>>> HomeKit: Using existing accessory ID: 99:9A:A0:6D:70:4C
+>>> HomeKit: Configuring mDNS
+HomeKit: adding mDNS TXT record md=model_unknown
+HomeKit: adding mDNS TXT record pv=1.0
+HomeKit: adding mDNS TXT record id=99:9A:A0:6D:70:4C
+HomeKit: adding mDNS TXT record c#=1
+HomeKit: adding mDNS TXT record s#=1
+HomeKit: adding mDNS TXT record ff=0
+HomeKit: adding mDNS TXT record sf=1
+HomeKit: adding mDNS TXT record ci=5
+HomeKit: adding mDNS TXT record sh=Vk8Pzw==
+on_homekit_event: Server initialised, Free Heap=23072
+on_homekit_event: Acessory is NOT paired on initialisation, Free Heap=23072
+wifi_check_stop_start Stopping Task
+mDNS: Delaying probe until IP is acquired
+Got IP, resuming mDNS
+mDNS: Probing 1 Led_Strip-RGBW-2826776
+mDNS: Probing 1 Led_Strip-RGBW-2826776
+mDNS: Probing 2 Led_Strip-RGBW-2826776
+mDNS: Probing 3 Led_Strip-RGBW-2826776
+mDNS: Probe successful, announcing Led_Strip-RGBW-2826776 TXT md=model_unknown pv=1.0 id=99:9A:A0:6D:70:4C c#=1 s#=1 ff=0 sf=1 ci=5 sh=Vk8Pzw== 
+mDNS: Announcing 1 Led_Strip-RGBW-2826776
+mDNS: Announcing 2 Led_Strip-RGBW-2826776
+mDNS: Announcing 3 Led_Strip-RGBW-2826776
+mDNS: Announcing 4 Led_Strip-RGBW-2826776
+ip:192.168.1.80,mask:255.255.255.0,gw:192.168.1.254
+>>> HomeKit: Clients connected: 1
+>>> HomeKit: [Client 1] Got new client connection from 192.168.1.162
+on_homekit_event: Client connected, Free Heap=24692
+>>> HomeKit: [Client 1] Pair Setup Step 1/3
+>>> HomeKit: Clients connected: 2
+>>> HomeKit: [Client 2] Got new client connection from 192.168.1.162
+>>> HomeKit: [Client 1]  Have existing connection from 192.168.1.162 X
+on_homekit_event: Client connected, Free Heap=19492
+>>> HomeKit: [Client 1] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 1
+on_homekit_event: Client disconnected, Free Heap=22088
+>>> HomeKit: Clients connected: 2
+>>> HomeKit: [Client 1] Got new client connection from 192.168.1.162
+>>> HomeKit: [Client 2]  Have existing connection from 192.168.1.162 X
+on_homekit_event: Client connected, Free Heap=22088
+>>> HomeKit: [Client 2] Pair Setup Step 1/3
+>>> HomeKit: [Client 2] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 1
+on_homekit_event: Client disconnected, Free Heap=22596
+>>> HomeKit: [Client 1] Pair Setup Step 1/3
+>>> HomeKit: Clients connected: 2
+>>> HomeKit: [Client 2] Got new client connection from 192.168.1.162
+>>> HomeKit: [Client 1]  Have existing connection from 192.168.1.162 X
+on_homekit_event: Client connected, Free Heap=18984
+>>> HomeKit: [Client 1] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 1
+on_homekit_event: Client disconnected, Free Heap=21580
+>>> HomeKit: Clients connected: 2
+>>> HomeKit: [Client 1] Got new client connection from 192.168.1.162
+>>> HomeKit: [Client 2]  Have existing connection from 192.168.1.162 X
+on_homekit_event: Client connected, Free Heap=21580
+>>> HomeKit: [Client 2] Pair Setup Step 1/3
+!!! HomeKit: [Client 2] Failed to dump SPR public key (code -2)
+>>> HomeKit: [Client 2] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 1
+on_homekit_event: Client disconnected, Free Heap=20108
+>>> HomeKit: Clients connected: 2
+>>> HomeKit: [Client 2] Got new client connection from 192.168.1.162
+>>> HomeKit: [Client 1]  Have existing connection from 192.168.1.162 X
+on_homekit_event: Client connected, Free Heap=20108
+>>> HomeKit: [Client 1] Pair Setup Step 1/3
+!!! HomeKit: [Client 1] Failed to dump SPR public key (code -2)
+>>> HomeKit: [Client 1] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 1
+on_homekit_event: Client disconnected, Free Heap=20392
+>>> HomeKit: [Client 2] Pair Setup Step 1/3
+!!! HomeKit: [Client 2] Failed to dump SPR public key (code -2)
+>>> HomeKit: [Client 2] Closing client connection from 192.168.1.162
+>>> HomeKit: Clients connected: 0
+on_homekit_event: Client disconnected, Free Heap=22632
+>>> HomeKit: Clients connected: 1
+>>> HomeKit: [Client 1] Got new client connection from 192.168.1.162
+on_homekit_event: Client connected, Free Heap=24504
+>>> HomeKit: [Client 1] Pair Setup Step 1/3
+
