@@ -14,3 +14,20 @@ Use the GPIO buttons to change the GPIOs for each colour, note each value must n
 
 NOTE GPIO6 to GPIO11 are usually connected to the flash chip in ESP8266 boards. So these are not recommended for general use. 
 
+
+Default Pins are:- 
+
+IR 4
+Red 12
+Green 5
+Blue 13
+White 15
+
+
+Also common is:- 
+
+IR 4
+Red 14
+Green 5
+Blue 12
+White 13
