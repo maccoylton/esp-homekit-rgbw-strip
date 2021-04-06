@@ -2,7 +2,7 @@
 ![GitHub Releases](https://img.shields.io/github/downloads/maccoylton/esp-homekit-rgbw-strip/latest/total)
 
 # esp-homekit-rgbw-strip
-A homekit firmware  for a magic_home RGBW controller
+A homekit firmware  for a magichome RGBW controller
 
 
 
